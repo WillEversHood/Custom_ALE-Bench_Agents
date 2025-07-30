@@ -1,0 +1,3 @@
+[submodule "ALE-Bench"]
+	path = ALE-Bench
+	url = https://github.com/SakanaAI/ALE-Bench.git
