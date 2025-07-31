@@ -1,10 +1,10 @@
 from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 import base64
 import os
 from dotenv import load_dotenv
-
+import regex as re 
+from io import BytesIO
+from PIL import Image
 class OpenAIgent:
 # --- CONFIGURATION ---
     def __init__(self, statement, constraints, pics):
@@ -12,28 +12,41 @@ class OpenAIgent:
         self.task = 'tell me what you found?'
         self.role = 'you are an AI expert'
         self.messages = []
-        self.MODEL = os.getenv("gpt-4.1")  # Or "gpt-4" if 4.1 is not explicitly exposed
-        self.statement = statement
-        self.constraints = constraints
+        self.MODEL = os.getenv("MODEL")  # Or "gpt-4" if 4.1 is not explicitly exposed
+        self.api_key = os.getenv('OPENAI_API_KEY')
+        self.statement_content = statement
+        self.constraint_content = constraints
         self.pics = pics
+    
+
         def encode_image_base64(image_path):
-            with open(image_path, "rb") as image_file:
-                return base64.b64encode(image_file.read()).decode("utf-8")
+            for path, img in image_path.items():
+                buffered = BytesIO()
+                img.save(buffered, format='PNG')
+                img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')    
+                return img_base64
+           # with open(image_path, "rb") as image_file:
+           #     return base64.b64encode(image_file.read()).decode("utf-8")
+        '''
         def load_markdown_file(path):
             with open(path, "r", encoding="utf-8") as f:
                 return f.read()
         self.statement_content = load_markdown_file(self.statement)
         self.constraint_content = load_markdown_file(self.constraints)
+        '''
         self.image_base64 = encode_image_base64(self.pics)
            # Replace with your actual OpenAI API key
 
-    def task(self, task):
+    def task_set(self, task):
         self.task = task
-    def role(self, role):
+        return
+
+    def role_set(self, role):
         self.role = role
+        return
 
     # Construct the prompt
-    def messages(self):
+    def messages_set(self):
         self.messages = [
             {"role": "system", "content": f"{self.role}"},
             {
@@ -57,15 +70,21 @@ class OpenAIgent:
 
     # Send to OpenAI
     def run(self):
+        client = OpenAI(api_key=self.api_key)
         response = client.chat.completions.create(model=self.MODEL,
         messages=self.messages,
         temperature=0)
-        return response
+        #print(type(response.choices[0].message.content))
+        output_text = response.choices[0].message.content
+        #print(output_text)
+        return output_text 
 
     # tooling functions
     def extract_code(self, response):
+        #print(type(response))
         pattern = re.compile(r'(```|~~~)(.*?)(\n.*?)(\1)', re.DOTALL)
         matches = pattern.findall(response)
-        return matches
+        code = matches[0][2] # the third block of the regex findalll is the code and there is only one markdown file
+        return code
 
     # Print the response
