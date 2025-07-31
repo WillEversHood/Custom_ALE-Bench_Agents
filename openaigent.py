@@ -1,4 +1,6 @@
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 import base64
 import os
 from dotenv import load_dotenv
@@ -23,8 +25,8 @@ class OpenAIgent:
         self.statement_content = load_markdown_file(self.statement)
         self.constraint_content = load_markdown_file(self.constraints)
         self.image_base64 = encode_image_base64(self.pics)
-        openai.api_key = os.getenv('OPENAI_API_KEY')   # Replace with your actual OpenAI API key
-    
+           # Replace with your actual OpenAI API key
+
     def task(self, task):
         self.task = task
     def role(self, role):
@@ -55,13 +57,11 @@ class OpenAIgent:
 
     # Send to OpenAI
     def run(self):
-        response = openai.ChatCompletion.create(
-            model=self.MODEL,
-            messages=self.messages,
-            temperature=0
-        )
+        response = client.chat.completions.create(model=self.MODEL,
+        messages=self.messages,
+        temperature=0)
         return response
-    
+
     # tooling functions
     def extract_code(self, response):
         pattern = re.compile(r'(```|~~~)(.*?)(\n.*?)(\1)', re.DOTALL)
