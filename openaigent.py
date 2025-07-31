@@ -17,6 +17,7 @@ class OpenAIgent:
         self.statement_content = statement
         self.constraint_content = constraints
         self.pics = pics
+        self.research = ''
     
 
         def encode_image_base64(image_path):
@@ -52,9 +53,10 @@ class OpenAIgent:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": "Here are two markdown files for context:"},
+                    {"type": "text", "text": "Here are two markdown files for context and some research (if the research is present it is the most important):"},
                     {"type": "text", "text": f"File 1:\n{self.statement_content}"},
                     {"type": "text", "text": f"File 2:\n{self.constraint_content}"},
+                    {"type": "text", "text": f"File 2:\n{self.research}"},
                     {"type": "text", "text": "And here is an image to analyze in context:"},
                     {
                         "type": "image_url",
@@ -67,13 +69,22 @@ class OpenAIgent:
                 ]
             }
         ]
-
+    def useless(self):
+        return
     # Send to OpenAI
     def run(self):
+        # research Application
         client = OpenAI(api_key=self.api_key)
-        response = client.chat.completions.create(model=self.MODEL,
-        messages=self.messages,
-        temperature=0)
+        self.role_set('You are a talented researcher and Analyst')
+        self.task_set('Your job is to research and find the best possible methods to solve the given problem given the context and image')
+        self.messages_set()
+        response = client.chat.completions.create(model=self.MODEL, messages=self.messages, temperature=0)
+        self.research = response.choices[0].message.content
+        # Engineer
+        self.role_set('You are a talented optimization engineer especially known for creating solutions in cpp20')
+        self.task_set('Analyze the provided research, problem statement, constraints, and image, and generate a solution written cpp20. Product should be a single block of cpp20')
+        self.messages_set()
+        response = client.chat.completions.create(model=self.MODEL, messages=self.messages, temperature=0)
         #print(type(response.choices[0].message.content))
         output_text = response.choices[0].message.content
         #print(output_text)
